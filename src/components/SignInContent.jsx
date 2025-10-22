@@ -1,10 +1,11 @@
 import InputField from "./InputField";
-import React, {useState} from "react";
+import {useState} from "react";
+import Button from "./Button.jsx";
 
 import mailIcon from '../assets/mail.svg';
 import passwordIcon from '../assets/password.svg';
 
-function SignInContent() {
+function SignInContent({showVerification}) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
@@ -32,16 +33,9 @@ function SignInContent() {
                 icon={passwordIcon}
             />
 
-            <button
-                disabled={isDisabled}
-                className={`w-full py-2 rounded-md text-sm font-light transition ${
-                    isDisabled
-                        ? "bg-gray-100 border border-gray-200 text-gray-400 opacity-80 cursor-not-allowed"
-                        : "bg-blue-600 hover:bg-blue-700 text-white"
-                }`}>
-                Log in
-            </button>
+            <Button text='Log in' isDisabled={isDisabled} handlerClick={showVerification} />
         </div>
     )
 }
+
 export default SignInContent

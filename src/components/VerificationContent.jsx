@@ -8,10 +8,10 @@ function VerificationContent() {
     const [time, setTime] = useState(0);
     const [error, setError] = useState(null);
 
-    const { data, refetch, isSuccess } = useQuery({
+    const { data, refetch } = useQuery({
         queryKey: ["auth-code"],
         queryFn: fetchMockAuthCode,
-        enabled: true,
+        enabled: false,
     });
 
     const inputsRef = useRef([]);
@@ -22,6 +22,7 @@ function VerificationContent() {
 
     const handleChange = (value, index) => {
         if (!/^\d?$/.test(value)) return;
+
         const newCode = [...code];
         newCode[index] = value;
         setCode(newCode);
@@ -30,6 +31,7 @@ function VerificationContent() {
         if (value && index < 5) {
             inputsRef.current[index + 1].focus();
         }
+
         if (newCode.every(c => c !== "")) {
             if (newCode.join("") !== data?.code) {
                 setError("invalid code");
@@ -45,29 +47,33 @@ function VerificationContent() {
         }
     }
 
+    const startTimer = (seconds) => {
+        setTime(seconds);
+        timerRef.current = setInterval(() => {
+            setTime((prev) => (prev > 0 ? prev - 1 : 0));
+        }, 1000);
+    };
+
     const getCode = async () => {
         clearInterval(timerRef.current);
         setCode(Array(6).fill(""));
         setError(null);
-
-        const { data: newData } = await refetch();
-        if (newData?.expiresIn) {
-            setTime(newData.expiresIn);
-            timerRef.current = setInterval(() => {
-                setTime((prev) => (prev > 0 ? prev - 1 : 0));
-            }, 1000);
+        try {
+            const { data: newData } = await refetch();
+            if (newData?.error) return setError(newData.error);
+            if (newData?.expiresIn) startTimer(newData.expiresIn);
+        } catch (err) {
+            setError("Something went wrong");
         }
     };
 
     useEffect(() => {
-        if (isSuccess) {
-            getCode();
-        }
+        getCode();
         return () => clearInterval(timerRef.current);
     }, []);
 
     return (
-        <div className='flex flex-col gap-4'>
+        <div className='flex flex-col items-center gap-4'>
             <h1 className="text-2xl font-medium leading-8 align-middle  tracking-wider">
                 Two-Factor Authentication
             </h1>
@@ -98,15 +104,12 @@ function VerificationContent() {
                 </p>
             )}
 
-            {(time <= 0) && (
-                <Button text='Get new' isDisabled={false} handlerClick={getCode}/>
-            )
-            }
+            {time <= 0 ? (
+                <Button text="Get new" isDisabled={isCodeRight} handlerClick={getCode} />
+            ) : (
+                isComplete && <Button text="Continue" isDisabled={!isCodeRight} />
+            )}
 
-            {isComplete && (
-                <Button text='Contine' isDisabled={!isCodeRight}/>
-            )
-            }
         </div>
     )
 }

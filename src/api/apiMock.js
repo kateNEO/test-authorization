@@ -5,10 +5,16 @@ const generateRandomCode = () => {
 
 export const fetchMockAuthCode = async () => {
     await new Promise((res) => setTimeout(res, 300));
-    const code = generateRandomCode();
-    console.log("Valid code:", code);
+
+    const isError = Math.random() < 0.5;
+    const error = isError ? "Server unavailable" : null;
+    const code = !isError ? generateRandomCode() : null;
+
+    if (code) console.log("Valid code:", code);
+
     return {
         code,
         expiresIn: 30,
+        error,
     };
 };
